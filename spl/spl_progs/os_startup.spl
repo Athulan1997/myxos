@@ -19,9 +19,4 @@ PTLR = 4;
 [READY_LIST + 1] = 2;
 SP = 3 * 512;
 [28 * 512] = 0;
-// Load Interrupt 1 Routine from disk to memory
-load (11, 5);
-load (12, 6);
-load (9, 3);
-load (10, 4);
 ireturn;
