@@ -1,0 +1,50 @@
+alias currentPID S0;
+breakpoint;
+currentPID = (PTBR - 1024) / 8;
+alias currentPCB S1;
+currentPCB = READY_LIST + 32 * currentPID;
+[ currentPCB + 1 ] = 1; // Set STATE to READY
+[ currentPCB + 2 ] = BP;
+[ currentPCB + 3 ] = SP - 1; 
+alias physicalSP S2;
+physicalSP = ([PTBR + 2 * (SP / 512)] * 512) + (SP % 512); 
+[ currentPCB + 4 ] = [ physicalSP ]; 
+[ currentPCB + 5 ] = PTBR;
+[ currentPCB + 6 ] = PTLR ; 
+[ currentPCB + 7 ] = R0;
+[ currentPCB + 8 ] = R1;
+[ currentPCB + 9 ] = R2; 
+[ currentPCB + 10 ] = R3; 
+[ currentPCB + 11 ] = R4; 
+[ currentPCB + 12 ] = R5; 
+[ currentPCB + 13 ] = R6;
+[ currentPCB + 14 ] = R7;
+alias next S3;
+next = currentPCB + 32;
+while([next + 1]!=1)do
+	if(next>2535)then
+		next=1536;
+	else
+        next = next + 32;
+	endif;
+endwhile;
+R0 = [next + 7];
+R1 = [next + 8];
+R2 = [next + 9];
+R3 = [next + 10];
+R4 = [next + 11];
+R5 = [next + 12];
+R6 = [next + 13];
+R7 = [next + 14];
+PTBR = [next + 5];
+PTLR = [next + 6];
+SP = [next + 3];
+BP = [next + 2];
+SP = SP + 1;
+alias newphysicalSP S4;
+newphysicalSP = ([PTBR + 2 * (SP / 512)] * 512) + (SP % 512);
+[ newphysicalSP ] = [ next + 4 ];
+[next + 1] = 2;
+breakpoint;
+ireturn;
+   
