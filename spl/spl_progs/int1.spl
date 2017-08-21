@@ -1,0 +1,53 @@
+alias physicalSP S0;
+physicalSP = ([PTBR + 2 * (SP / 512)] * 512) + (SP % 512);
+.
+// Get system call no. from the stack and put it in a register
+alias sysCallNo S1;
+sysCallNo = [physicalSP - 1];
+// Get arguments from stack and put it in registers
+alias args S2;
+args = [physicalSP - 3];
+if ( sysCallNo == 1) then
+
+	// Implementation of Create
+	alias FATIndex S3; 
+	FATIndex = 0;
+	while ([FAT + FATIndex]!=args && FATIndex != 64) do
+		FATIndex = FATIndex + 8;
+	endwhile;
+        if (FATIndex == 64) then
+		alias DFLIndex S4;
+		DFLIndex = 1;
+		while ([DISK_LIST + DFLIndex]!=0 && DFLIndex != 448)	do
+			DFLIndex = DFLIndex + 1;
+		endwhile;
+		if(DFLIndex == 448) then			
+			[physicalSP - 2] = -1;
+			ireturn;
+		endif;
+		FATIndex = 2;
+		while ([FAT + FATIndex]!=-1 && FATIndex != 66) do
+                	FATIndex = FATIndex + 8;
+        	endwhile;
+		if(FATIndex == 66) then
+                        [physicalSP - 2] = -1;
+                        ireturn;
+                endif;
+		[FAT + FATIndex - 2] = args;
+		[FAT + FATIndex - 1] = 0;
+		[FAT + FATIndex] = DFLIndex;
+		load(1,DFLIndex);
+		alias counter S5;
+		counter = 0;
+		while (counter != 512) do 
+			[SCRATCHPAD + counter] = -1;
+			counter = counter + 1;
+		endwhile;
+		store(1,DFLIndex);
+		[DISK_LIST + DFLIndex] = 1;
+		store(5,19);
+		store(6,20);
+	endif;
+	[physicalSP - 2] = 0;
+	ireturn;
+endif;
