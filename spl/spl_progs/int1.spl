@@ -36,6 +36,7 @@ if ( sysCallNo == 1) then
 		[FAT + FATIndex - 2] = args;
 		[FAT + FATIndex - 1] = 0;
 		[FAT + FATIndex] = DFLIndex;
+		if(DFLIndex != 0 && DFLIndex != "") then
 		load(1,DFLIndex);
 		alias counter S5;
 		counter = 0;
@@ -47,7 +48,60 @@ if ( sysCallNo == 1) then
 		[DISK_LIST + DFLIndex] = 1;
 		store(5,19);
 		store(6,20);
+		[physicalSP - 2] = 0;
+                ireturn;
+		endif;
 	endif;
-	[physicalSP - 2] = 0;
+	[physicalSP - 2] = -1;
 	ireturn;
+endif;
+if (sysCallNo == 4) then
+	alias SWOFTIndex S4;
+	alias FATIndex S3;
+	alias counter S5;
+	alias count S6;
+	alias temp S7;	
+        FATIndex = 0;
+        while ([FAT + FATIndex]!=args && FATIndex != 64) do
+                FATIndex = FATIndex + 8;
+        endwhile;
+	if (FATIndex != 64) then	
+		SWOFTIndex = 0;
+		while([FILE_TABLE + SWOFTIndex]!= (FATIndex / 8) && SWOFTIndex != 128) do
+                        SWOFTIndex = SWOFTIndex + 2;
+                endwhile;
+		if(SWOFTIndex == 128) then 
+			if([FAT + FATIndex + 2] != 0 && [FAT + FATIndex + 2] != "") then
+			load(1,[FAT + FATIndex + 2]);
+			counter = 512;
+			while([counter] != -1  && [counter] != "") do
+				temp = [counter];
+				count = 0;
+				while (count < 512) do
+					[512 + count] ="";
+					count = count + 1; 
+				endwhile;
+				store(1,temp);
+				[DISK_LIST + temp] = 0;
+				counter = counter  + 1;
+				load(1,[FAT + FATIndex + 2]);
+			endwhile;
+			count = 0;
+ 			while (count < 512) do
+                                [512 + count] ="";
+                                count = count + 1;
+                        endwhile;
+			store(1,[FAT + FATIndex + 2]);
+			[DISK_LIST + [FAT + FATIndex + 2]] = 0;
+			store(6,20);
+			[FAT + FATIndex] = -1;
+			[FAT + FATIndex + 2] = -1;
+			store(5,19);
+			[physicalSP - 2] = 0;
+		        ireturn;
+			endif;
+		endif;
+	endif;
+[physicalSP - 2] = -1;
+ireturn;
 endif;

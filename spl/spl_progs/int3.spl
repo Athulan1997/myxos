@@ -1,0 +1,60 @@
+alias physicalSP S0;
+physicalSP = ([PTBR + 2 * (SP / 512)] * 512) + (SP % 512);
+// Get system call no. from the stack and put it in a register
+alias cPID S5;
+cPID = (PTBR - 1024)/8;
+alias cPCB S6;
+cPCB = READY_LIST + (cPID * 8);
+alias counter S7;
+alias sysCallNo S1;
+sysCallNo = [physicalSP - 1];
+alias FATIndex S4;
+// Get arguments from stack and put it in registers
+alias arg1 S2;
+arg1 = [physicalSP - 4];
+alias arg2 S3;
+arg2 = [physicalSP - 3];
+alias FATSize S8;
+alias SWOFTIndex S9;
+
+if ( sysCallNo == 6) then
+        if(arg1 >= 0 && arg1 < 8) then
+                counter = arg1 * 2;
+                if([cPCB + counter  + 15] != -1) then
+                        SWOFTIndex = [cPCB + counter  + 15] * 2;
+                        FATIndex = [FILE_TABLE + SWOFTIndex] * 8;
+                        FATSize = [FAT + FATIndex + 1];
+                        if (arg2 >= 0 && arg2 < FATSize) then
+				[FILE_TABLE + SWOFTIndex + 1] = arg2;
+				[physicalSP - 2] = 0;
+			        ireturn;
+			endif;
+                endif;
+
+        endif;
+        [physicalSP - 2] = -1;
+        ireturn;
+endif;
+if ( sysCallNo == 7) then
+        if(arg1 >= 0 && arg1 < 8) then
+                counter = arg1 * 2;
+                if([cPCB + counter  + 15] != -1) then
+                        SWOFTIndex = [cPCB + counter  + 15] * 2;
+                        FATIndex = [FILE_TABLE + SWOFTIndex] * 8;
+                        load(1,[FAT + FATIndex + 2]);
+                        FATSize = [FAT + FATIndex + 1];
+                        if([FILE_TABLE + SWOFTIndex + 1] < FATSize) then
+				load(1,[512 +([FILE_TABLE + SWOFTIndex + 1] / 512)]);
+				arg2 = [512 +([FILE_TABLE + SWOFTIndex + 1] % 512)];
+				[FILE_TABLE + SWOFTIndex + 1] =[FILE_TABLE + SWOFTIndex + 1] + 1;
+				[physicalSP - 2] = 0;
+				ireturn;
+			endif;
+                endif;
+
+        endif;
+        [physicalSP - 2] = -1;
+        ireturn;
+endif;
+
+
