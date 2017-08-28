@@ -24,24 +24,26 @@ if ( sysCallNo == 5) then
 			FATIndex = [FILE_TABLE + SWOFTIndex] * 8;
 			load(1,[FAT + FATIndex + 2]);
 			BBIndex = [FILE_TABLE + SWOFTIndex + 1] / 512;
-			if([512 + BBIndex] == -1) then
+			if([512 + BBIndex] == -1 || [512 + BBIndex] == "") then
 				counter = 24;
 				while([DISK_LIST + counter] != 0 && counter != 448) do
 					counter = counter + 1;
 				endwhile;
 				if(counter != 448) then
 					[DISK_LIST + counter] = 1;	
-					[FAT + FATIndex + 1] = [FAT + FATIndex + 1] + 1;
+					[FAT + FATIndex + 1] = [FAT + FATIndex + 1] + 512;
+					store(1,[FAT + FATIndex + 2]);					
 					[512 + 	BBIndex] = counter;
-					store(1,[FAT + FATIndex + 2]);
 					store(5,19);
 					store(6,20);
 				endif;
 			endif;
+			load(1,[FAT + FATIndex + 2]);
+			BBIndex = [FILE_TABLE + SWOFTIndex + 1] / 512;
 			if([512 + BBIndex] != -1) then
-				load(1,[512 + BBIndex]);
+				load(1,counter);
 				[512 + ([FILE_TABLE + SWOFTIndex + 1] % 512)] = arg2;
-				store(1,[512 + BBIndex]);
+				store(1,counter);
 				[FILE_TABLE + SWOFTIndex + 1] = [FILE_TABLE + SWOFTIndex + 1] + 1;
 				[physicalSP - 2] = 0;
 				ireturn;

@@ -17,7 +17,7 @@ if ( sysCallNo == 1) then
 	endwhile;
         if (FATIndex == 64) then
 		alias DFLIndex S4;
-		DFLIndex = 1;
+		DFLIndex = 24;
 		while ([DISK_LIST + DFLIndex]!=0 && DFLIndex != 448)	do
 			DFLIndex = DFLIndex + 1;
 		endwhile;
