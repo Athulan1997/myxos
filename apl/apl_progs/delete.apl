@@ -8,9 +8,10 @@ integer main()
         print(status);
 	status = Delete("hello.dat");
         print(status);
-	status = Delete("abc.txt");
+	status = Delete("Evennums.dat");
         print(status);
-
+	status = Delete("Oddnums.dat");
+        print(status);
        
 
         return 0;

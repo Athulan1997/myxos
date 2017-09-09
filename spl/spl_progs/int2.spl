@@ -36,36 +36,34 @@ if ( sysCallNo == 2) then
 				[physicalSP - 2] = -1;
 				ireturn;
 			endif;
-			[FILE_TABLE + SWOFTIndex] = FATIndex / 8;
-                        [FILE_TABLE + SWOFTIndex + 1] = 0;
                 endif;	
 			counter = 0;
 			while([cPCB + counter + 15] != -1 && counter != 16) do
 				 counter = counter + 2;
 			endwhile;
-			if(counter == 16) then
+			if(counter == 16)then
 				[physicalSP - 2] = -1;
                                 ireturn;
 			endif;
 				 [cPCB + counter + 15] = SWOFTIndex / 2;
 				 [cPCB + counter + 16] = 0;
+				 [FILE_TABLE + SWOFTIndex] = FATIndex/8;
 				 [FILE_TABLE + SWOFTIndex + 1] = [FILE_TABLE + SWOFTIndex + 1] + 1 ;
 				 [physicalSP - 2] = counter / 2; 
 				ireturn;
 
 endif;
 if (sysCallNo == 3) then
+	print "hello";
 	if(args >= 0 && args < 8) then
 		counter = args * 2;
 		if([cPCB + counter  + 15] != -1) then 
 			SWOFTIndex = [cPCB + counter  + 15] * 2;
-			if([FILE_TABLE +  SWOFTIndex + 1] > 1) then 
-				[FILE_TABLE +  SWOFTIndex + 1] = [FILE_TABLE +  SWOFTIndex + 1] - 1;
-			else 
+	  		[FILE_TABLE +  SWOFTIndex + 1] = [FILE_TABLE +  SWOFTIndex + 1] - 1;
+			if([FILE_TABLE + SWOFTIndex + 1] == 0)then      
 				[FILE_TABLE +  SWOFTIndex] = -1;
-				[FILE_TABLE +  SWOFTIndex + 1] = -1;
+			endif;
 				[cPCB + counter + 15] = -1; 
-			endif;	
 			[physicalSP - 2] = 0;
                         ireturn;
 		endif;

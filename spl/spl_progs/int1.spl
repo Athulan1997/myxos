@@ -15,6 +15,10 @@ if ( sysCallNo == 1) then
 	while ([FAT + FATIndex]!=args && FATIndex != 64) do
 		FATIndex = FATIndex + 8;
 	endwhile;
+	if(FATIndex != 64) then
+		[physicalSP - 2] =0;
+		ireturn;
+	endif;
         if (FATIndex == 64) then
 		alias DFLIndex S4;
 		DFLIndex = 24;
@@ -95,6 +99,7 @@ if (sysCallNo == 4) then
 			[DISK_LIST + [FAT + FATIndex + 2]] = 0;
 			store(6,20);
 			[FAT + FATIndex] = -1;
+			[FAT + FATIndex + 1] = 0;
 			[FAT + FATIndex + 2] = -1;
 			store(5,19);
 			[physicalSP - 2] = 0;
