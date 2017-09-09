@@ -1,57 +1,75 @@
 alias physicalSP S0;
-physicalSP = ([PTBR + 2 * (SP / 512)] * 512) + (SP % 512);
-// Get system call no. from the stack and put it in a register
-alias cPID S5;
-cPID = (PTBR - 1024)/8;
-alias cPCB S6;
-cPCB = READY_LIST + (cPID * 8);
-alias counter S7;
+physicalSP = ([PTBR + 2*(SP/512)]*512) + (SP%512);
+
 alias sysCallNo S1;
 sysCallNo = [physicalSP - 1];
-alias FATIndex S4;
-// Get arguments from stack and put it in registers
-alias arg1 S2;
-arg1 = [physicalSP - 4];
-alias arg2 S3;
-arg2 = [physicalSP - 3];
-alias BBIndex S8;
-alias SWOFTIndex S9;
-if ( sysCallNo == 5) then
-	if(arg1 >= 0 && arg1 < 8) then
-                counter = arg1 * 2;
-                if([cPCB + counter  + 15] != -1) then
-                        SWOFTIndex = [cPCB + counter  + 15] * 2;
-			FATIndex = [FILE_TABLE + SWOFTIndex] * 8;
-			load(1,[FAT + FATIndex + 2]);
-			BBIndex = [FILE_TABLE + SWOFTIndex + 1] / 512;
-			if([512 + BBIndex] == -1 || [512 + BBIndex] == "") then
-				counter = 24;
-				while([DISK_LIST + counter] != 0 && counter != 448) do
-					counter = counter + 1;
-				endwhile;
-				if(counter != 448) then
-					[DISK_LIST + counter] = 1;	
-					[FAT + FATIndex + 1] = [FAT + FATIndex + 1] + 512;
-					store(1,[FAT + FATIndex + 2]);					
-					[512 + 	BBIndex] = counter;
-					store(5,19);
-					store(6,20);
-				endif;
+
+alias word S2;
+word = [physicalSP - 3];
+
+alias fDesc S3;
+fDesc= [physicalSP - 4];
+
+if (sysCallNo == 5) then
+	if ((fDesc < 0) || (fDesc >= 8)) then
+		[physicalSP - 2]=-1;
+		ireturn;
+	endif;
+
+	alias cPID S4;
+	cPID = (PTBR - 1024)/8;
+	
+	alias cPCB S5;
+	cPCB = READY_LIST + 32*cPID;
+
+	alias FileIndex S6;
+	FileIndex=[cPCB + 2*fDesc + 15];
+
+	alias LSEEK S7;
+	LSEEK=[cPCB + 2*fDesc + 16];
+
+	if (FileIndex == -1) then
+		[physicalSP - 2]=-1;
+		ireturn;
+	endif;
+
+	alias FATIndex S8;
+	FATIndex=[FILE_TABLE + 2*FileIndex];
+
+	alias BasicBlock S9;
+	BasicBlock=[FAT + 8*FATIndex + 2];
+	load(1,BasicBlock);
+
+	alias DFLIndex S10;
+	DFLIndex=[SCRATCHPAD + (LSEEK/512)];
+
+	if ((DFLIndex == -1) || (DFLIndex == "")) then
+		DFLIndex=24;
+		while(DFLIndex < 448) do
+			if ([DISK_LIST + DFLIndex] == 0) then
+				[DISK_LIST + DFLIndex]=1;
+				break;
 			endif;
-			load(1,[FAT + FATIndex + 2]);
-			BBIndex = [FILE_TABLE + SWOFTIndex + 1] / 512;
-			if([512 + BBIndex] != -1) then
-				load(1,counter);
-				[512 + ([FILE_TABLE + SWOFTIndex + 1] % 512)] = arg2;
-				store(1,counter);
-				[FILE_TABLE + SWOFTIndex + 1] = [FILE_TABLE + SWOFTIndex + 1] + 1;
-				[physicalSP - 2] = 0;
-				ireturn;
-			endif;
-                endif;
-                                
-        endif;
-	[physicalSP - 2] = -1;
-	ireturn;
+			DFLIndex=DFLIndex+1;
+		endwhile;
+
+		if (DFLIndex == 448) then
+			[physicalSP - 2]=-1;
+			ireturn;
+		endif;
+
+		[SCRATCHPAD + (LSEEK/512)]=DFLIndex;
+		store(1,BasicBlock);
+		[FAT + 8*FATIndex + 1]=[FAT + 8*FATIndex + 1]+512;
+		store(5,19);
+		store(6,20);
+	endif;
+
+	load(1,DFLIndex);
+	[SCRATCHPAD + (LSEEK%512)]=word;
+	store(1,DFLIndex);
+	[cPCB + 2*fDesc + 16]=[cPCB + 2*fDesc + 16]+1;
+	[physicalSP - 2]=0;
 endif;
 
+ireturn;
